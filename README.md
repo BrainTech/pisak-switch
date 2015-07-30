@@ -9,9 +9,9 @@ To put the software on your Nanite use the following command:
 >`$ make flash`
 
 After changes, you can compile and put your software on the Nanite by typing:
->`$ make clean`
->`$ make main.hex`
->`$ make flash`  
+>`$ make clean` <br />
+>`$ make main.hex` <br />
+>`$ make flash`
 
 Be sure to have a copy of Micronucleus (https://github.com/micronucleus/micronucleus)
 installed on your device! After typing "make flash" command just plug in your Nanite 85
