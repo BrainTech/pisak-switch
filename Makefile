@@ -1,32 +1,25 @@
-# WinAVR cross-compiler toolchain is used here
+# Two first steps of WinAVR cross-compiler toolchain are used here, and to put
+# the file in the flash we use Micronucleus
 CC = avr-gcc
 OBJCOPY = avr-objcopy
-DUDE = avrdude
+DUDE = micronucleus
 
-# If you are not using ATtiny2313 and the USBtiny programmer, 
-# update the lines below to match your configuration
+# Configuration for the attiny85, which is the main part of the Wattuino Nanite 85
 CFLAGS = -Wall -Os -Iusbdrv -mmcu=attiny85
 OBJFLAGS = -j .text -j .data -O ihex
-DUDEFLAGS = -p attiny85 -c usbtiny -v
+DUDEFLAGS = --run
 
-# Object files for the firmware (usbdrv/oddebug.o not strictly needed I think)
+# The list of object files for the firmware
 OBJECTS = usbdrv/usbdrv.o usbdrv/oddebug.o usbdrv/usbdrvasm.o main.o
 
-# Command-line client
-CMDLINE = usbtest.exe
-
-# By default, build the firmware and command-line client, but do not flash
+# Building the firmware for attiny85
 all: main.hex $(CMDLINE)
 
-# With this, you can flash the firmware by just typing "make flash" on command-line
+# By using command "make flash" the firmware is uploaded to Nanite
 flash: main.hex
-	$(DUDE) $(DUDEFLAGS) -U flash:w:$<
+	$(DUDE) $(DUDEFLAGS) $<
 
-# One-liner to compile the command-line client from usbtest.c
-$(CMDLINE): usbtest.c
-	gcc -I ./libusb/include -L ./libusb/lib/gcc -O -Wall usbtest.c -o usbtest.exe -lusb
-
-# Housekeeping if you want it
+# Removing the files existing after compilation
 clean:
 	$(RM) *.o *.hex *.elf usbdrv/*.o
 
@@ -34,18 +27,17 @@ clean:
 %.hex: %.elf
 	$(OBJCOPY) $(OBJFLAGS) $< $@
 
-# Main.elf requires additional objects to the firmware, not just main.o
+# Making main.elf file from object files
 main.elf: $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@
 
-# Without this dependance, .o files will not be recompiled if you change 
-# the config! I spent a few hours debugging because of this...
+# Recompiling .o files after changing the config
 $(OBJECTS): usbdrv/usbconfig.h
 
-# From C source to .o object file
+# Making object .o files from .c files
 %.o: %.c	
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# From assembler source to .o object file
+# Making object .o files from assembler .S files
 %.o: %.S
 	$(CC) $(CFLAGS) -x assembler-with-cpp -c $< -o $@
