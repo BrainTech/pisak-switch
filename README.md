@@ -1,9 +1,12 @@
 ##pisak-switch
 
-Pisak-switch is a software created for Wattuino Nanite 85 (https://github.com/watterott/wattuino).
-It contains a subfolder "usbdrv" from V-USB library (http://www.obdev.at/avrusb/)
+Pisak-switch is a firmware created for Wattuino Nanite 85 (https://github.com/watterott/wattuino).
+By connecting microswitch to PB1 it's possible to create a simple switch HID (eg. button)
+that can be used to control interfaces such as in PISAK project.
+The firmware contains a subfolder "usbdrv" from V-USB library (http://www.obdev.at/avrusb/)
 with configuration files customized to fit the hardware requirements.
-The software is based on tutorial written by Joonas Pihlajamaa (http://codeandlife.com/).
+The tutorials written by Joonas Pihlajamaa (http://codeandlife.com/) were very helpful
+during developing this firmware.
 
 To put the software on your Nanite use the following command:
 >`$ make flash`

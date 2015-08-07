@@ -1,10 +1,3 @@
-/**
- * Project: AVR ATtiny USB Tutorial at http://codeandlife.com/
- * Author: Joonas Pihlajamaa, joonas.pihlajamaa@iki.fi
- * Inspired by V-USB example code by Christian Starkjohann
- * Copyright: (C) 2012 by Joonas Pihlajamaa
- * License: GNU GPL v3 (see License.txt)
- */
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
@@ -14,8 +7,6 @@
 
 #define F_CPU 16500000L
 #include <util/delay.h>
-
-#define VENDOR_RQ_READ_BUFFER 0x01
 
 PROGMEM const char usbHidReportDescriptor[34] = { /* USB report descriptor, size must match usbconfig.h */
         0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
@@ -38,90 +29,49 @@ PROGMEM const char usbHidReportDescriptor[34] = { /* USB report descriptor, size
         0xC0,                          // END COLLECTION
 };
 
-static uchar replyBuf[16] = "Hello, USB!";
-static uchar dataReceived = 0, dataLength = 0; // for USB_DATA_IN
-static uchar currentPosition, bytesRemaining;
 
-// this gets called when custom control message is received
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
-    usbRequest_t *rq = (void *)data;
-
-    switch(rq->bRequest){
-        case VENDOR_RQ_READ_BUFFER:
-            currentPosition = 0;                // initialize position index
-            bytesRemaining = rq->wLength.word;  // store the amount of data requested
-            return USB_NO_MSG;                  // tell driver to use usbFunctionRead()
+    /* Function which is never used but is required by V-USB. */
+    return USB_NO_MSG;
     }
 
-    return 0; // by default don't return any data
-}
-
-uchar getData(uchar position){
-    return 0;
-}
-
-uchar usbFunctionRead(uchar *data, uchar len)
-{
-    uchar i;
-    if(len > bytesRemaining)                // len is max chunk size
-        len = bytesRemaining;               // send an incomplete chunk
-    bytesRemaining -= len;
-    for(i = 0; i < len; i++)
-        data[i] = getData(currentPosition); // copy the data to the buffer
-    return len;                             // return real chunk size
-}
-
-void pinInit() {
-    DDRB |= _BV(PB0); // PB0 as input
-    PORTB |= _BV(PB0);
-    DDRB &= ~_BV(PB1); //PB1 as output
-    PORTB &= ~_BV(PB1);
-}
-
-uchar getInterruptData(uchar *pos) {
+void getInterruptData(uchar *data) {
+    /* Reads data from PINB0. Puts 0 into data                *
+     * if the button is not pressed and 1 otherwise.          */
     wdt_reset();
     if (PINB & (1<<PB0)) {
-        *pos = 0;
+        *data = 0;
     }
     else {
-        *pos = 1;
+        *data = 1;
     }
-    return 1;
 }
 
 int main() {
 	uchar i;
-
-	pinInit();
+    DDRB |= _BV(PB0);       // set PB0 as input
+    PORTB |= _BV(PB0);      // set pull-up for PB0
 	
-    wdt_enable(WDTO_1S); // enable 1s watchdog timer
-
+    wdt_enable(WDTO_1S);
     usbInit();
-	
-    usbDeviceDisconnect(); // enforce re-enumeration
-    for(i = 0; i<250; i++) { // wait 500 ms
-        wdt_reset(); // keep the watchdog happy
+    usbDeviceDisconnect();
+    for(i = 0; i<250; i++) {
+        wdt_reset();
         _delay_ms(2);
     }
     usbDeviceConnect();
-	
-    sei(); // Enable interrupts after re-enumeration
+    sei();
 
     while(1) {
-        wdt_reset(); // keep the watchdog happy
+        wdt_reset();
         usbPoll();
 
         if(usbInterruptIsReady()) {
-            uchar *p;
-            p = 0;
-            uchar len = getInterruptData(p); // obtain chunk of max 8 bytes
-            PORTB |= _BV(PB1);
-            if(len > 0) {                         // only send if we have data
-                usbSetInterrupt(p, len);
-            }
+            uchar *interrupt_data;
+            interrupt_data = 0;
+            getInterruptData(interrupt_data);
+            usbSetInterrupt(interrupt_data, 1);
         }
-
-
     }
 	
     return 0;
