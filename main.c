@@ -17,41 +17,30 @@
 
 #define VENDOR_RQ_READ_BUFFER 0x01
 
-PROGMEM const char usbHidReportDescriptor[52] = { /* USB report descriptor, size must match usbconfig.h */
+PROGMEM const char usbHidReportDescriptor[34] = { /* USB report descriptor, size must match usbconfig.h */
         0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
         0x09, 0x00,                    // USAGE (Undefined)
         0xa1, 0x01,                    // COLLECTION (Application)
-        0x09, 0x01,                    //   USAGE (Pointer)
+        0x09, 0x00,                    //   USAGE (Undefined)
         0xA1, 0x00,                    //   COLLECTION (Physical)
         0x05, 0x09,                    //     USAGE_PAGE (Button)
-        0x19, 0x01,                    //     USAGE_MINIMUM
-        0x29, 0x03,                    //     USAGE_MAXIMUM
+        0x19, 0x01,                    //     USAGE_MINIMUM (Button 1)
+        0x29, 0x01,                    //     USAGE_MAXIMUM (Button 1)
         0x15, 0x00,                    //     LOGICAL_MINIMUM (0)
         0x25, 0x01,                    //     LOGICAL_MAXIMUM (1)
-        0x95, 0x03,                    //     REPORT_COUNT (3)
+        0x95, 0x01,                    //     REPORT_COUNT (1)
         0x75, 0x01,                    //     REPORT_SIZE (1)
         0x81, 0x02,                    //     INPUT (Data,Var,Abs)
         0x95, 0x01,                    //     REPORT_COUNT (1)
-        0x75, 0x05,                    //     REPORT_SIZE (5)
+        0x75, 0x07,                    //     REPORT_SIZE (7)
         0x81, 0x03,                    //     INPUT (Const,Var,Abs)
-        0x05, 0x01,                    //     USAGE_PAGE (Generic Desktop)
-        0x09, 0x30,                    //     USAGE (X)
-        0x09, 0x31,                    //     USAGE (Y)
-        0x09, 0x38,                    //     USAGE (Wheel)
-        0x15, 0x81,                    //     LOGICAL_MINIMUM (-127)
-        0x25, 0x7F,                    //     LOGICAL_MAXIMUM (127)
-        0x75, 0x08,                    //     REPORT_SIZE (8)
-        0x95, 0x03,                    //     REPORT_COUNT (3)
-        0x81, 0x06,                    //     INPUT (Data,Var,Rel)
         0xC0,                          //   END_COLLECTION
         0xC0,                          // END COLLECTION
 };
 
 static uchar replyBuf[16] = "Hello, USB!";
 static uchar dataReceived = 0, dataLength = 0; // for USB_DATA_IN
-
-static uchar reportBuffer = 0;
-static uchar currentPosition, bytesRemaining, idleRate;
+static uchar currentPosition, bytesRemaining;
 
 // this gets called when custom control message is received
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
@@ -61,20 +50,10 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
         case VENDOR_RQ_READ_BUFFER:
             currentPosition = 0;                // initialize position index
             bytesRemaining = rq->wLength.word;  // store the amount of data requested
-            return USB_NO_MSG;                          // tell driver to use usbFunctionRead()
+            return USB_NO_MSG;                  // tell driver to use usbFunctionRead()
     }
 
     return 0; // by default don't return any data
-}
-
-// This gets called when data is sent from PC to the device
-USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
-	uchar i;
-			
-	for(i = 0; dataReceived < dataLength && i < len; i++, dataReceived++)
-		replyBuf[dataReceived] = data[i];
-		
-    return (dataReceived == dataLength); // 1 if we received it all, 0 if not
 }
 
 uchar getData(uchar position){
@@ -101,14 +80,13 @@ void pinInit() {
 
 uchar getInterruptData(uchar *pos) {
     wdt_reset();
-    if (PINB ^ _BV(PB0)) {
-        PORTB &= ~_BV(PB1);
-        *pos = 25;
-        return 1;
+    if (PINB & (1<<PB0)) {
+        *pos = 0;
     }
     else {
-        return 0;
+        *pos = 1;
     }
+    return 1;
 }
 
 int main() {
