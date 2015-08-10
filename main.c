@@ -8,7 +8,8 @@
 #define F_CPU 16500000L
 #include <util/delay.h>
 
-PROGMEM const char usbHidReportDescriptor[34] = { /* USB report descriptor, size must match usbconfig.h */
+// USB report descriptor, size must match usbconfig.h
+PROGMEM const char usbHidReportDescriptor[34] = {
         0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
         0x09, 0x00,                    // USAGE (Undefined)
         0xa1, 0x01,                    // COLLECTION (Application)
@@ -29,52 +30,53 @@ PROGMEM const char usbHidReportDescriptor[34] = { /* USB report descriptor, size
         0xC0,                          // END COLLECTION
 };
 
-
-usbMsgLen_t usbFunctionSetup(uchar data[8]) {
-    /* Function which is never used but is required by V-USB. */
+// function which is never used but is required by V-USB
+usbMsgLen_t usbFunctionSetup(uchar data[8])
+{
     return USB_NO_MSG;
-    }
-
-void getInterruptData(uchar *data) {
-    /* Reads data from PINB0. Puts 0 into data                *
-     * if the button is not pressed and 1 otherwise.          */
-    wdt_reset();
-    if (PINB & (1<<PB0)) {
-        *data = 0;
-    }
-    else {
-        *data = 1;
-    }
 }
 
-int main() {
-	uchar i;
-    DDRB |= _BV(PB0);           // set PB0 as input
-    PORTB |= _BV(PB0);          // set pull-up for PB0
+int main()
+{
+    DDRB |= _BV(PB0);              // set PB0 as input
+    PORTB |= _BV(PB0);             // set pull-up for PB0
 	
-    wdt_enable(WDTO_1S);        // enable watchdog
-    usbInit();                  // initialize USB connection
+    wdt_enable(WDTO_1S);           // enable watchdog
+    usbInit();                     // initialize USB connection
 
-    usbDeviceDisconnect();      // disconnect to enforce re-enumeration
-    for(i = 0; i<250; i++) {    //   in order to be sure that the host and
-        wdt_reset();            //   the device have the same ID
+    usbDeviceDisconnect();         // disconnect to enforce re-enumeration
+    for(uchar i = 0; i < 250; i++) //   in order to be sure that the host and
+    {                              //   the device have the same ID
+        wdt_reset();
         _delay_ms(2);
     }
-    usbDeviceConnect();         // reconnect
-    sei();                      // enable interrupts
+    usbDeviceConnect();            // reconnect
+    sei();                         // enable interrupts
 
-    while(1) {
+    while(1)
+    {
         wdt_reset();
-        usbPoll();                                  // inevitable to start sending
-                                                    //   interrupt signals
+        usbPoll();                 // required to start sending
+                                   //   interrupt signals
 
-        if(usbInterruptIsReady()) {
+        if(usbInterruptIsReady())
+        {
+            wdt_reset();
+
+            // Reads data from PINB0. Puts 0 into data
+            // if the button is not pressed and 1 otherwise.
+
             uchar interrupt_data;
-            interrupt_data = 0;
-            getInterruptData(&interrupt_data);      // read data from PB0
-            usbSetInterrupt(&interrupt_data, 1);    // send data to the host
+            if(PINB & (1<<PB0))
+                interrupt_data = 0;
+            else
+                interrupt_data = 1;
+
+            // send data to the host
+            usbSetInterrupt(&interrupt_data, 1);
         }
     }
-	
+
     return 0;
 }
+
