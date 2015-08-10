@@ -5,7 +5,7 @@ OBJCOPY = avr-objcopy
 DUDE = micronucleus
 
 # Configuration for the attiny85, which is the main part of the Wattuino Nanite 85
-CFLAGS = -Wall -Os -Iusbdrv -mmcu=attiny85
+CFLAGS = -Wall -Os -Iusbdrv -std=gnu99 -mmcu=attiny85
 OBJFLAGS = -j .text -j .data -O ihex
 DUDEFLAGS = --run
 
