@@ -8,10 +8,7 @@ with configuration files customized to fit the hardware requirements.
 The tutorials written by Joonas Pihlajamaa (http://codeandlife.com/) were very helpful
 during developing this firmware.
 
-To put the software on your Nanite use the following command:
->`$ make flash`
-
-After changes, you can compile and put your software on the Nanite by typing:
+You can compile and put the firmware on the Nanite by typing:
 >`$ make clean` <br />
 >`$ make main.hex` <br />
 >`$ make flash`
