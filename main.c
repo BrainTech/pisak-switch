@@ -49,28 +49,30 @@ void getInterruptData(uchar *data) {
 
 int main() {
 	uchar i;
-    DDRB |= _BV(PB0);       // set PB0 as input
-    PORTB |= _BV(PB0);      // set pull-up for PB0
+    DDRB |= _BV(PB0);           // set PB0 as input
+    PORTB |= _BV(PB0);          // set pull-up for PB0
 	
-    wdt_enable(WDTO_1S);
-    usbInit();
-    usbDeviceDisconnect();
-    for(i = 0; i<250; i++) {
-        wdt_reset();
+    wdt_enable(WDTO_1S);        // enable watchdog
+    usbInit();                  // initialize USB connection
+
+    usbDeviceDisconnect();      // disconnect to enforce re-enumeration
+    for(i = 0; i<250; i++) {    //   in order to be sure that the host and
+        wdt_reset();            //   the device have the same ID
         _delay_ms(2);
     }
-    usbDeviceConnect();
-    sei();
+    usbDeviceConnect();         // reconnect
+    sei();                      // enable interrupts
 
     while(1) {
         wdt_reset();
-        usbPoll();
+        usbPoll();                                  // inevitable to start sending
+                                                    //   interrupt signals
 
         if(usbInterruptIsReady()) {
-            uchar *interrupt_data;
+            uchar interrupt_data;
             interrupt_data = 0;
-            getInterruptData(interrupt_data);
-            usbSetInterrupt(interrupt_data, 1);
+            getInterruptData(&interrupt_data);      // read data from PB0
+            usbSetInterrupt(&interrupt_data, 1);    // send data to the host
         }
     }
 	
