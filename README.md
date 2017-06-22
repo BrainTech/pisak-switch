@@ -9,9 +9,9 @@ The tutorials written by Joonas Pihlajamaa (http://codeandlife.com/) were very h
 during developing this firmware.
 
 You can compile and put the firmware on the Nanite by typing:
->`$ make clean` <br />
->`$ make main.hex` <br />
->`$ make flash`
+>` make clean` <br />
+>` make main.hex` <br />
+>` sudo make flash`
 
 Be sure to have a copy of Micronucleus (https://github.com/micronucleus/micronucleus)
 installed on your device! After typing "make flash" command just plug in your Nanite 85
